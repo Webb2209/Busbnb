@@ -1,0 +1,155 @@
+// Prisma Schema for BusBnB
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Layout {
+  TWO_BY_ONE // 2×1 layout (33 seats, 3 per row: A B C)
+  TWO_BY_TWO // 2×2 layout (45 seats, 4 per row: A B C D)
+}
+
+enum SeatStatus {
+  AVAILABLE
+  LOCKED  // temporarily held for a passenger (expires after 10 min)
+  BOOKED  // permanently confirmed
+}
+
+enum TripStatus {
+  SCHEDULED
+  DEPARTED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING // M-Pesa STK push sent; awaiting PIN confirmation
+  PAID    // M-Pesa callback confirmed
+  FAILED  // Callback failure or manual override
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Company {
+  id        String         @id @default(cuid())
+  name      String
+  logoUrl   String?
+  buses     Bus[]
+  operators OperatorUser[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model OperatorUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  company      Company  @relation(fields: [companyId], references: [id])
+  companyId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Bus {
+  id          String   @id @default(cuid())
+  plateNumber String   @unique
+  capacity    Int
+  layout      Layout
+  amenities   String[]
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  trips       Trip[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Route {
+  id          String   @id @default(cuid())
+  origin      String
+  destination String
+  trips       Trip[]
+  createdAt   DateTime @default(now())
+
+  @@unique([origin, destination])
+}
+
+model Trip {
+  id            String     @id @default(cuid())
+  route         Route      @relation(fields: [routeId], references: [id])
+  routeId       String
+  bus           Bus        @relation(fields: [busId], references: [id])
+  busId         String
+  departureTime DateTime
+  arrivalTime   DateTime
+  price         Decimal    @db.Decimal(10, 2)
+  status        TripStatus @default(SCHEDULED)
+  seats         Seat[]
+  bookings      Booking[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Seat {
+  id           String      @id @default(cuid())
+  trip         Trip        @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId       String
+  number       String      // e.g. "1A", "2B", "3D"
+  status       SeatStatus  @default(AVAILABLE)
+  lockedAt     DateTime?   // set when status = LOCKED; null otherwise
+  bookingSeats BookingSeat[]
+
+  @@unique([tripId, number])
+}
+
+model Booking {
+  id              String          @id @default(cuid())
+  bookingRef      String          @unique @default(cuid())
+  trip            Trip            @relation(fields: [tripId], references: [id])
+  tripId          String
+  // Guest passenger details (no account required)
+  fullName        String
+  email           String
+  phone           String
+  totalAmount     Decimal         @db.Decimal(10, 2)
+  status          BookingStatus   @default(PENDING)
+  mpesaRef        String?         // M-Pesa transaction ID, set on PAID
+  checkoutRequestId String?       @unique // Daraja CheckoutRequestID, set on STK Push
+  seats           BookingSeat[]
+  mpesaCallbacks  MpesaCallback[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model BookingSeat {
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId String
+  seat      Seat    @relation(fields: [seatId], references: [id])
+  seatId    String
+
+  @@id([bookingId, seatId])
+}
+
+model MpesaCallback {
+  id          String   @id @default(cuid())
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  bookingId   String
+  rawPayload  Json
+  receivedAt  DateTime @default(now())
+}
+
+// Admin-only access — no passenger accounts
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
