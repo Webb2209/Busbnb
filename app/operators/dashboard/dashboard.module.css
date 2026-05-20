@@ -1,0 +1,355 @@
+/* ── Operator Dashboard — Scoped Styles ────────────────────────────────────── */
+
+/* Root */
+.dashRoot {
+  min-height: 100vh;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top bar ──────────────────────────────────────────────────────────────── */
+.dashTopbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.dashLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.dashLogoDot {
+  width: 28px;
+  height: 28px;
+  background: #f43f5e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashLogoDot span {
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.dashLogoName {
+  color: #f43f5e;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.5px;
+}
+
+.dashLogout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dashLogout:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.dashLogout:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.dashBody {
+  display: flex;
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 28px 24px;
+  gap: 24px;
+}
+
+.dashSidebar {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.dashContent {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #6b7280;
+  transition: background 0.12s, color 0.12s;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+
+.sidebarItem:hover {
+  background: #f3f4f6;
+  color: #111;
+}
+
+.sidebarItem.active {
+  background: #fce7eb;
+  color: #be123c;
+  font-weight: 700;
+}
+
+.sidebarBadge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-radius: 999px;
+}
+
+.sidebarItem.active .sidebarBadge {
+  background: #fff;
+  color: #be123c;
+}
+
+/* ── Content card ─────────────────────────────────────────────────────────── */
+.contentCard {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #f0f0f0;
+  padding: 28px;
+}
+
+/* ── Overview ─────────────────────────────────────────────────────────────── */
+.overviewGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.welcomeCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, #fff1f3, #fff);
+  border: 1px solid #fecdd3;
+  border-radius: 16px;
+}
+
+.welcomeAvatar {
+  width: 52px;
+  height: 52px;
+  background: #f43f5e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.welcomeTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 4px;
+}
+
+.welcomeSub {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.quickActionsCard {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.sectionLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #9ca3af;
+  margin: 0 0 12px;
+}
+
+.quickActionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Quick action card ────────────────────────────────────────────────────── */
+.qcard {
+  text-align: left;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.qcardInner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 12px;
+  border-radius: 12px;
+  transition: background 0.12s;
+  cursor: pointer;
+}
+
+.qcard:not(:disabled) .qcardInner:hover {
+  background: #fce7eb;
+}
+
+.qcard:disabled .qcardInner {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qcardIcon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.qcardText {
+  flex: 1;
+}
+
+.qcardTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0 0 2px;
+}
+
+.qcardDesc {
+  font-size: 0.77rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.qcardArrow {
+  color: #d1d5db;
+  flex-shrink: 0;
+}
+
+/* ── Coming soon ──────────────────────────────────────────────────────────── */
+.comingSoon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 10px;
+  text-align: center;
+}
+
+.comingSoonIcon {
+  font-size: 2.5rem;
+}
+
+.comingSoonTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  margin: 4px 0 0;
+}
+
+.comingSoonSub {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  max-width: 280px;
+  margin: 0;
+}
+
+/* ── Profile loading skeleton ─────────────────────────────────────────────── */
+.dashProfileLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .dashBody {
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .dashSidebar {
+    width: 100%;
+  }
+
+  .sidebarNav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .sidebarItem {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .contentCard {
+    padding: 20px 16px;
+  }
+}

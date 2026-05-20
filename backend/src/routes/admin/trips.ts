@@ -16,6 +16,7 @@ import { Layout, TripStatus, BookingStatus } from '@prisma/client';
 import { prisma } from '../../config/db';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/apiError';
+import { ok, okDeleted, okList } from '../../utils/response';
 
 const router = Router();
 
@@ -62,11 +63,7 @@ router.get(
       prisma.trip.count(),
     ]);
 
-    res.json({
-      success: true,
-      data: trips,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    });
+    okList(res, trips, { page, limit, total, totalPages: Math.ceil(total / limit) });
   }),
 );
 
@@ -92,7 +89,7 @@ router.post(
       include: { route: true, bus: { include: { company: true } } },
     });
 
-    res.status(201).json({ success: true, data: trip });
+    ok(res, trip, 201);
   }),
 );
 
@@ -120,7 +117,7 @@ router.patch(
       include: { route: true, bus: { include: { company: true } } },
     });
 
-    res.json({ success: true, data: trip });
+    ok(res, trip);
   }),
 );
 
@@ -131,7 +128,7 @@ router.delete(
     if (!existing) throw ApiError.notFound('Trip not found');
 
     await prisma.trip.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 
@@ -160,15 +157,12 @@ router.get(
       prisma.booking.count({ where }),
     ]);
 
-    res.json({
-      success: true,
-      data: bookings.map((b) => ({
-        ...b,
-        totalAmount: Number(b.totalAmount),
-        seats: b.seats.map((bs) => bs.seat.number),
-      })),
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    });
+    const mapped = bookings.map((b) => ({
+      ...b,
+      totalAmount: Number(b.totalAmount),
+      seats: b.seats.map((bs) => bs.seat.number),
+    }));
+    okList(res, mapped, { page, limit, total, totalPages: Math.ceil(total / limit) });
   }),
 );
 
@@ -189,7 +183,7 @@ router.patch(
       data,
     });
 
-    res.json({ success: true, data: { ...booking, totalAmount: Number(booking.totalAmount) } });
+    ok(res, { ...booking, totalAmount: Number(booking.totalAmount) });
   }),
 );
 

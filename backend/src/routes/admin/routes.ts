@@ -8,6 +8,7 @@ import { prisma } from '../../config/db';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/apiError';
 import { redisClient } from '../../utils/redis';
+import { ok, okDeleted } from '../../utils/response';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get(
     const routes = await prisma.route.findMany({
       orderBy: [{ origin: 'asc' }, { destination: 'asc' }],
     });
-    res.json({ success: true, data: routes });
+    ok(res, routes);
   }),
 );
 
@@ -42,7 +43,7 @@ router.post(
     // Bust public routes cache
     if (redisClient) await redisClient.del('api:routes');
 
-    res.status(201).json({ success: true, data: route });
+    ok(res, route, 201);
   }),
 );
 
@@ -68,7 +69,7 @@ router.patch(
 
     if (redisClient) await redisClient.del('api:routes');
 
-    res.json({ success: true, data: route });
+    ok(res, route);
   }),
 );
 
@@ -89,7 +90,7 @@ router.delete(
 
     if (redisClient) await redisClient.del('api:routes');
 
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 

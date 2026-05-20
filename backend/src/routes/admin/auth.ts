@@ -4,16 +4,17 @@
  * POST /api/admin/auth/refresh – Refreshes access token from HttpOnly cookie
  * POST /api/admin/auth/logout – Clears HttpOnly cookies
  */
-import { Router, type Response, type CookieOptions } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import jwt, { type SignOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { env } from '../../config/env';
 import { prisma } from '../../config/db';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/apiError';
 import { adminLoginLimiter } from '../../middleware/rateLimiter';
 import { issueTokens, setTokenCookies } from '../../utils/authUtils';
+import { ok, okDeleted } from '../../utils/response';
 
 const router = Router();
 
@@ -41,7 +42,7 @@ router.post(
     setTokenCookies(res, tokens);
     
     // VULN-04 Fix: Do not return tokens in JSON body, rely on HttpOnly cookies
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 
@@ -67,7 +68,7 @@ router.post(
       setTokenCookies(res, tokens);
 
       // VULN-04 Fix: Do not return tokens in JSON body
-      res.json({ success: true });
+      okDeleted(res);
     } catch {
       res.clearCookie('accessToken');
       res.clearCookie('refreshToken');
@@ -82,7 +83,7 @@ router.post(
   asyncHandler(async (_req, res) => {
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 

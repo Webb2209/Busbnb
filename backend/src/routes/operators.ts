@@ -9,6 +9,7 @@ import { issueTokens, setTokenCookies } from '../utils/authUtils';
 import { sendNewOperatorNotification } from '../services/email.service';
 import { logger } from '../utils/logger';
 import { requireOperator } from '../middleware/operatorAuth';
+import { ok, okDeleted } from '../utils/response';
 
 const router = Router();
 
@@ -70,13 +71,7 @@ router.post(
     await sendNewOperatorNotification(companyName, contactName, email);
 
     // 6. Return success
-    res.status(201).json({
-      success: true,
-      data: {
-        operatorId: result.operator.id,
-        companyId: result.company.id,
-      },
-    });
+    ok(res, { operatorId: result.operator.id, companyId: result.company.id }, 201);
   }),
 );
 
@@ -100,15 +95,12 @@ router.post(
     setTokenCookies(res, tokens);
 
     // Return minimal profile so the frontend can hydrate the UI immediately
-    res.json({
-      success: true,
-      data: {
-        operatorId: operator.id,
-        name: operator.name,
-        email: operator.email,
-        companyId: operator.companyId,
-        companyName: operator.company.name,
-      },
+    ok(res, {
+      operatorId: operator.id,
+      name: operator.name,
+      email: operator.email,
+      companyId: operator.companyId,
+      companyName: operator.company.name,
     });
   }),
 );
@@ -124,16 +116,13 @@ router.get(
     });
     if (!operator) throw ApiError.unauthorized('Operator not found. Please log in again.');
 
-    res.json({
-      success: true,
-      data: {
-        operatorId: operator.id,
-        name: operator.name,
-        email: operator.email,
-        companyId: operator.companyId,
-        companyName: operator.company.name,
-        logoUrl: operator.company.logoUrl,
-      },
+    ok(res, {
+      operatorId: operator.id,
+      name: operator.name,
+      email: operator.email,
+      companyId: operator.companyId,
+      companyName: operator.company.name,
+      logoUrl: operator.company.logoUrl,
     });
   }),
 );
@@ -144,7 +133,7 @@ router.post(
   asyncHandler(async (_req, res) => {
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 

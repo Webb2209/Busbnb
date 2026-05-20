@@ -8,6 +8,7 @@ import { Layout } from '@prisma/client';
 import { prisma } from '../../config/db';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/apiError';
+import { ok, okDeleted } from '../../utils/response';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.get(
       orderBy: { plateNumber: 'asc' },
       include: { company: true },
     });
-    res.json({ success: true, data: buses });
+    ok(res, buses);
   }),
 );
 
@@ -35,7 +36,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const data = busSchema.parse(req.body);
     const bus = await prisma.bus.create({ data, include: { company: true } });
-    res.status(201).json({ success: true, data: bus });
+    ok(res, bus, 201);
   }),
 );
 
@@ -51,7 +52,7 @@ router.patch(
       data,
       include: { company: true },
     });
-    res.json({ success: true, data: bus });
+    ok(res, bus);
   }),
 );
 
@@ -62,7 +63,7 @@ router.delete(
     if (!existing) throw ApiError.notFound('Bus not found');
 
     await prisma.bus.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 

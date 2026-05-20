@@ -12,6 +12,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/apiError';
 import { requireOperator } from '../middleware/operatorAuth';
 import { redisClient } from '../utils/redis';
+import { ok } from '../utils/response';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.get(
         _count: { select: { trips: true } },
       },
     });
-    res.json({ success: true, data: routes });
+    ok(res, routes);
   }),
 );
 
@@ -66,7 +67,7 @@ router.post(
       await redisClient.del('api:routes');
     }
 
-    res.status(201).json({ success: true, data: route });
+    ok(res, route, 201);
   }),
 );
 

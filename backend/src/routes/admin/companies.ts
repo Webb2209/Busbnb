@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { prisma } from '../../config/db';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/apiError';
+import { ok, okDeleted } from '../../utils/response';
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get(
       orderBy: { name: 'asc' },
       include: { _count: { select: { buses: true } } },
     });
-    res.json({ success: true, data: companies });
+    ok(res, companies);
   }),
 );
 
@@ -34,7 +35,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const data = companySchema.parse(req.body);
     const company = await prisma.company.create({ data });
-    res.status(201).json({ success: true, data: company });
+    ok(res, company, 201);
   }),
 );
 
@@ -46,7 +47,7 @@ router.patch(
 
     const data = companySchema.partial().parse(req.body);
     const company = await prisma.company.update({ where: { id: req.params.id }, data });
-    res.json({ success: true, data: company });
+    ok(res, company);
   }),
 );
 
@@ -57,7 +58,7 @@ router.delete(
     if (!existing) throw ApiError.notFound('Company not found');
 
     await prisma.company.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 

@@ -17,6 +17,7 @@ import { lockSeats, unlockSeats, verifyLockToken } from '../services/seatLock.se
 import { SeatStatus } from '@prisma/client';
 import { seatLockLimiter } from '../middleware/rateLimiter';
 import { redisClient } from '../utils/redis';
+import { ok, okList, okDeleted } from '../utils/response';
 
 const router = Router();
 
@@ -27,7 +28,7 @@ router.get(
     const routes = await prisma.route.findMany({
       orderBy: [{ origin: 'asc' }, { destination: 'asc' }],
     });
-    res.json({ success: true, data: routes });
+    ok(res, routes);
   }),
 );
 
@@ -109,23 +110,14 @@ router.get(
       status: t.status,
     }));
 
-    const responseData = {
-      success: true,
-      data,
-      pagination: {
-        page: query.page,
-        limit: query.limit,
-        total,
-        totalPages: Math.ceil(total / query.limit),
-      },
-    };
+    const responseData = { data, pagination: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) } };
 
     if (redisClient) {
       // VULN-Ops Fix: Cache trip search results for 1 minute to handle traffic spikes
-      await redisClient.set(cacheKey, JSON.stringify(responseData), 'EX', 60); 
+      await redisClient.set(cacheKey, JSON.stringify({ success: true, ...responseData }), 'EX', 60);
     }
 
-    res.json(responseData);
+    okList(res, data, { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) });
   }),
 );
 
@@ -147,30 +139,27 @@ router.get(
 
     if (!trip) throw ApiError.notFound('Trip not found');
 
-    res.json({
-      success: true,
-      data: {
-        id: trip.id,
-        route: trip.route,
-        bus: {
-          id: trip.bus.id,
-          plateNumber: trip.bus.plateNumber,
-          capacity: trip.bus.capacity,
-          layout: trip.bus.layout,
-          amenities: trip.bus.amenities,
-          company: trip.bus.company,
-        },
-        departureTime: trip.departureTime,
-        arrivalTime: trip.arrivalTime,
-        price: Number(trip.price),
-        status: trip.status,
-        seats: trip.seats.map((s) => ({
-          id: s.id,
-          number: s.number,
-          // Never expose LOCKED as a status to clients — show as locked from their POV
-          status: s.status === 'AVAILABLE' ? 'available' : 'locked',
-        })),
+    ok(res, {
+      id: trip.id,
+      route: trip.route,
+      bus: {
+        id: trip.bus.id,
+        plateNumber: trip.bus.plateNumber,
+        capacity: trip.bus.capacity,
+        layout: trip.bus.layout,
+        amenities: trip.bus.amenities,
+        company: trip.bus.company,
       },
+      departureTime: trip.departureTime,
+      arrivalTime: trip.arrivalTime,
+      price: Number(trip.price),
+      status: trip.status,
+      seats: trip.seats.map((s) => ({
+        id: s.id,
+        number: s.number,
+        // Never expose LOCKED as a status to clients — show as locked from their POV
+        status: s.status === 'AVAILABLE' ? 'available' : 'locked',
+      })),
     });
   }),
 );
@@ -193,10 +182,7 @@ router.post(
 
     const lockToken = await lockSeats(req.params.id, seats, req.ip || 'unknown');
 
-    res.json({
-      success: true,
-      data: { lockToken, expiresIn: 600 }, // 600 seconds = 10 min
-    });
+    ok(res, { lockToken, expiresIn: 600 }); // 600 seconds = 10 min
   }),
 );
 
@@ -216,7 +202,7 @@ router.delete(
     if (payload.tripId !== req.params.id) throw ApiError.forbidden('Lock token does not match the requested trip');
 
     await unlockSeats(req.params.id, seats);
-    res.json({ success: true });
+    okDeleted(res);
   }),
 );
 

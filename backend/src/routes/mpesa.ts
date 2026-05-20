@@ -5,7 +5,7 @@
  * Safaricom POSTs here after the user enters their M-Pesa PIN.
  * This endpoint MUST be a public HTTPS URL. Use ngrok in development.
  */
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/db';
 import { asyncHandler } from '../utils/asyncHandler';
 import { parseMpesaCallback } from '../services/mpesa.service';
@@ -15,6 +15,7 @@ import { mpesaCallbackLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
 import { isInCidr } from '../utils/cidr';
+import type { SafaricomCallbackBody } from '../types/mpesa';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ const SAFARICOM_CIDRS = [
   '196.201.209.0/24',
 ];
 
-const safaricomIpWhitelist = (req: any, res: any, next: any) => {
+const safaricomIpWhitelist = (req: Request, res: Response, next: NextFunction) => {
   // Skip IP filtering in sandbox mode (ngrok/local dev callbacks come from arbitrary IPs)
   if (process.env.MPESA_ENV === 'sandbox') return next();
 
@@ -65,7 +66,7 @@ router.post(
     res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
 
     // Parse the callback payload
-    const parsed = parseMpesaCallback(req.body);
+    const parsed = parseMpesaCallback(req.body as SafaricomCallbackBody);
 
     if (!parsed.checkoutRequestId) {
       logger.error({ body: req.body }, '[M-Pesa] Callback missing CheckoutRequestID');

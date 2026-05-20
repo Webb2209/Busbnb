@@ -16,6 +16,7 @@ import { initiateStkPush } from '../services/mpesa.service';
 import { sendTicketEmail } from '../services/email.service';
 import { bookingLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
+import { ok } from '../utils/response';
 
 const router = Router();
 
@@ -109,15 +110,12 @@ router.post(
       // Don't fail the booking — frontend will poll and timeout
     }
 
-    res.status(201).json({
-      success: true,
-      data: {
-        bookingId: booking.id,
-        bookingRef: booking.bookingRef,
-        status: booking.status,
-        totalAmount: Number(booking.totalAmount),
-      },
-    });
+    ok(res, {
+      bookingId: booking.id,
+      bookingRef: booking.bookingRef,
+      status: booking.status,
+      totalAmount: Number(booking.totalAmount),
+    }, 201);
   }),
 );
 
@@ -153,35 +151,32 @@ router.get(
       throw ApiError.forbidden('Email does not match this booking');
     }
 
-    res.json({
-      success: true,
-      data: {
-        id: booking.id,
-        bookingRef: booking.bookingRef,
-        status: booking.status,
-        mpesaRef: booking.mpesaRef,
-        totalAmount: Number(booking.totalAmount),
-        createdAt: booking.createdAt,
-        passenger: {
-          fullName: booking.fullName,
-          email: booking.email,
-          phone: booking.phone,
+    ok(res, {
+      id: booking.id,
+      bookingRef: booking.bookingRef,
+      status: booking.status,
+      mpesaRef: booking.mpesaRef,
+      totalAmount: Number(booking.totalAmount),
+      createdAt: booking.createdAt,
+      passenger: {
+        fullName: booking.fullName,
+        email: booking.email,
+        phone: booking.phone,
+      },
+      seats: booking.seats.map((bs) => bs.seat.number),
+      trip: {
+        id: booking.trip.id,
+        route: booking.trip.route,
+        bus: {
+          id: booking.trip.bus.id,
+          plateNumber: booking.trip.bus.plateNumber,
+          layout: booking.trip.bus.layout,
+          amenities: booking.trip.bus.amenities,
+          company: booking.trip.bus.company,
         },
-        seats: booking.seats.map((bs) => bs.seat.number),
-        trip: {
-          id: booking.trip.id,
-          route: booking.trip.route,
-          bus: {
-            id: booking.trip.bus.id,
-            plateNumber: booking.trip.bus.plateNumber,
-            layout: booking.trip.bus.layout,
-            amenities: booking.trip.bus.amenities,
-            company: booking.trip.bus.company,
-          },
-          departureTime: booking.trip.departureTime,
-          arrivalTime: booking.trip.arrivalTime,
-          price: Number(booking.trip.price),
-        },
+        departureTime: booking.trip.departureTime,
+        arrivalTime: booking.trip.arrivalTime,
+        price: Number(booking.trip.price),
       },
     });
   }),

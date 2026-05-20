@@ -8,6 +8,7 @@
  * Daraja docs: https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate
  */
 import { env } from '../config/env';
+import type { SafaricomCallbackBody } from '../types/mpesa';
 
 const SANDBOX_BASE = 'https://sandbox.safaricom.co.ke';
 const PRODUCTION_BASE = 'https://api.safaricom.co.ke';
@@ -128,8 +129,7 @@ export interface ParsedMpesaCallback {
   phone?: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function parseMpesaCallback(body: any): ParsedMpesaCallback {
+export function parseMpesaCallback(body: SafaricomCallbackBody): ParsedMpesaCallback {
   const stk = body?.Body?.stkCallback;
   if (!stk) {
     return { success: false, resultCode: -1, resultDesc: 'Malformed callback body' };
@@ -144,17 +144,23 @@ export function parseMpesaCallback(body: any): ParsedMpesaCallback {
   }
 
   // Extract items from CallbackMetadata
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items: any[] = stk.CallbackMetadata?.Item ?? [];
-  const get = (name: string) => items.find((i) => i.Name === name)?.Value;
+  const items = stk.CallbackMetadata?.Item ?? [];
+  const getString = (name: string): string | undefined => {
+    const v = items.find((i) => i.Name === name)?.Value;
+    return v !== undefined ? String(v) : undefined;
+  };
+  const getNumber = (name: string): number | undefined => {
+    const v = items.find((i) => i.Name === name)?.Value;
+    return v !== undefined ? Number(v) : undefined;
+  };
 
   return {
     success: true,
     resultCode,
     resultDesc,
     checkoutRequestId,
-    mpesaRef: get('MpesaReceiptNumber'),
-    amount: get('Amount'),
-    phone: String(get('PhoneNumber') ?? ''),
+    mpesaRef: getString('MpesaReceiptNumber'),
+    amount: getNumber('Amount'),
+    phone: getString('PhoneNumber') ?? '',
   };
 }
