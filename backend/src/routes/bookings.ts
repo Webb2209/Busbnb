@@ -38,8 +38,8 @@ router.post(
   asyncHandler(async (req, res) => {
     const { tripId, lockToken, passenger } = createBookingSchema.parse(req.body);
 
-    // 1. Verify the lock token (VULN-05: now bound to IP)
-    const lockPayload = verifyLockToken(lockToken, req.ip || 'unknown');
+    // 1. Verify the lock token — checks IP binding and JTI reuse in Redis
+    const lockPayload = await verifyLockToken(lockToken, req.ip || 'unknown');
     if (lockPayload.tripId !== tripId) {
       throw ApiError.badRequest('Lock token does not match the requested trip', 'TOKEN_MISMATCH');
     }

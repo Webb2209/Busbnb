@@ -1,18 +1,16 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: busbnb_user
-      POSTGRES_PASSWORD: busbnb_password
-      POSTGRES_DB: busbnb_db
+      POSTGRES_USER: ${POSTGRES_USER:-busbnb_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-busbnb_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U busbnb_user -d busbnb_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-busbnb_user} -d ${POSTGRES_DB:-busbnb_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,6 +22,11 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   backend:
     build:
@@ -34,28 +37,35 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4000
-      - DATABASE_URL=postgresql://busbnb_user:busbnb_password@postgres:5432/busbnb_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-busbnb_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-busbnb_db}?schema=public
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=fallback_secret_for_docker_change_me
-      - JWT_REFRESH_SECRET=fallback_refresh_secret_change_me
-      - FRONTEND_URL=http://localhost:3000
-      - MPESA_ENV=sandbox
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - MPESA_CALLBACK_SECRET=${MPESA_CALLBACK_SECRET}
+      - MPESA_CONSUMER_KEY=${MPESA_CONSUMER_KEY}
+      - MPESA_CONSUMER_SECRET=${MPESA_CONSUMER_SECRET}
+      - MPESA_SHORTCODE=${MPESA_SHORTCODE}
+      - MPESA_PASSKEY=${MPESA_PASSKEY}
+      - MPESA_CALLBACK_URL=${MPESA_CALLBACK_URL}
+      - MPESA_ENV=${MPESA_ENV:-sandbox}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - RESEND_API_KEY=${RESEND_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
-    # This automatically runs DB migrations before starting PM2
-    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+        condition: service_healthy
+    # Runs DB migrations then starts the Node.js process directly (no PM2 in Docker)
+    command: sh -c "npx prisma migrate deploy && node dist/index.js"
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:4000}
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000
     depends_on:
       - backend
 

@@ -2,13 +2,13 @@
  * src/middleware/rateLimiter.ts
  * Rate limiters for sensitive endpoints.
  */
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import Redis from 'ioredis';
 
 // Optional: Use Redis if available, otherwise fallback to memory store
 const redisClient = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : undefined;
-const store = redisClient ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.call(...args) }) : undefined;
+const store = redisClient ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.call(args[0], ...args.slice(1)) as any }) : undefined;
 
 /** General API limiter — 100 requests per minute */
 export const generalLimiter = rateLimit({
@@ -30,8 +30,9 @@ export const bookingLimiter = rateLimit({
   message: { success: false, error: 'Too many booking attempts, please slow down.' },
   // Group limits by phone number (if provided in body) OR IP address to prevent STK push harassment
   keyGenerator: (req) => {
+    // Group by phone number when available; fall back to IPv4/IPv6-safe IP key
     const phone = req.body?.passenger?.phone;
-    return phone ? String(phone) : req.ip || 'unknown';
+    return phone ? String(phone) : ipKeyGenerator(req.ip ?? '127.0.0.1');
   }
 });
 

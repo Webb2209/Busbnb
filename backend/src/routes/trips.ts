@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { prisma } from '../config/db';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/apiError';
-import { lockSeats, unlockSeats } from '../services/seatLock.service';
+import { lockSeats, unlockSeats, verifyLockToken } from '../services/seatLock.service';
 import { SeatStatus } from '@prisma/client';
 import { seatLockLimiter } from '../middleware/rateLimiter';
 import { redisClient } from '../utils/redis';
@@ -211,8 +211,8 @@ router.delete(
   asyncHandler(async (req, res) => {
     const { seats, lockToken } = unlockSchema.parse(req.body);
     
-    // VULN-06 Fix: Verify ownership before unlocking
-    const payload = verifyLockToken(lockToken, req.ip || 'unknown');
+    // Verify ownership before unlocking — also marks JTI as used
+    const payload = await verifyLockToken(lockToken, req.ip || 'unknown');
     if (payload.tripId !== req.params.id) throw ApiError.forbidden('Lock token does not match the requested trip');
 
     await unlockSeats(req.params.id, seats);
