@@ -19,6 +19,9 @@ RUN npm run build
 FROM base AS runner
 ENV NODE_ENV=production
 
+# Prisma's native schema engine requires OpenSSL — not included in node:20-alpine
+RUN apk add --no-cache openssl
+
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/package-lock.json ./package-lock.json
 COPY --from=builder /app/dist ./dist
