@@ -4,14 +4,14 @@ WORKDIR /app
 
 # Dependencies stage — copy only package files to leverage Docker cache
 FROM base AS deps
-COPY backend/package.json backend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
 # Build stage — compile TypeScript and generate Prisma client
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
-# Copy entire backend directory as the build context is the repo root
-COPY backend/ .
+# Build context is ./backend (Railway sets context = Dockerfile's directory)
+COPY . .
 RUN npx prisma generate
 RUN npm run build
 
