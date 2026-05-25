@@ -2,21 +2,20 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Dependencies stage
+# Dependencies stage — copy only package files to leverage Docker cache
 FROM base AS deps
-COPY package.json package-lock.json ./
-# Install all dependencies (including dev for Prisma/TS)
+COPY backend/package.json backend/package-lock.json ./
 RUN npm ci
 
-# Build stage
+# Build stage — compile TypeScript and generate Prisma client
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-# Generate Prisma Client and build TS
+# Copy entire backend directory as the build context is the repo root
+COPY backend/ .
 RUN npx prisma generate
 RUN npm run build
 
-# Production stage
+# Production stage — lean image with only what's needed to run
 FROM base AS runner
 ENV NODE_ENV=production
 
@@ -24,16 +23,13 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/package-lock.json ./package-lock.json
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/start.sh ./start.sh
 
-# Install only production dependencies
+# Install only production dependencies and re-generate Prisma Client
 RUN npm ci --omit=dev && npm cache clean --force
-# Re-generate Prisma Client for the prod environment
 RUN npx prisma generate
+RUN chmod +x ./start.sh
 
 EXPOSE 4000
-
-# Use a startup script: run DB migrations first, then start the server.
-# `prisma migrate deploy` is safe to run on every startup — it's idempotent.
-COPY --from=builder /app/start.sh ./start.sh
-RUN chmod +x ./start.sh
+# start.sh runs `prisma migrate deploy` then `node dist/index.js`
 CMD ["./start.sh"]
