@@ -54,8 +54,11 @@ app.use(cookieParser());
 app.use('/api', generalLimiter);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
+// Responds immediately — confirms the process is alive and listening.
+// Railway probes this after container start; migrations run before node starts
+// (via start.sh) so DB is ready by the time this endpoint is registered.
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', env: env.NODE_ENV, timestamp: new Date().toISOString() });
+  res.status(200).json({ status: 'ok', env: env.NODE_ENV, timestamp: new Date().toISOString() });
 });
 
 // ─── Public Routes ────────────────────────────────────────────────────────────
