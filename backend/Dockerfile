@@ -25,12 +25,15 @@ COPY --from=builder /app/package-lock.json ./package-lock.json
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Install only production dependencies (no PM2 needed in Docker)
+# Install only production dependencies
 RUN npm ci --omit=dev && npm cache clean --force
 # Re-generate Prisma Client for the prod environment
 RUN npx prisma generate
 
 EXPOSE 4000
-# Run Node directly — Docker/Kubernetes handle process supervision and scaling.
-# PM2 cluster mode is reserved for bare-metal via `npm run start:prod`.
-CMD ["node", "dist/index.js"]
+
+# Use a startup script: run DB migrations first, then start the server.
+# `prisma migrate deploy` is safe to run on every startup — it's idempotent.
+COPY --from=builder /app/start.sh ./start.sh
+RUN chmod +x ./start.sh
+CMD ["./start.sh"]
