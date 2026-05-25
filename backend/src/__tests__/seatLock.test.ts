@@ -8,10 +8,9 @@
  *  - Lock token is rejected when expired
  *  - Lock token reuse is rejected (JTI invalidation)
  */
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 import { verifyLockToken } from '../services/seatLock.service';
-import * as redis from '../utils/redis';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -21,8 +20,8 @@ const mockRedisSet = jest.fn();
 
 jest.mock('../utils/redis', () => ({
   redisClient: {
-    get: (...args: any[]) => mockRedisGet(...args),
-    set: (...args: any[]) => mockRedisSet(...args),
+    get: (...args: Parameters<typeof mockRedisGet>) => mockRedisGet(...args),
+    set: (...args: Parameters<typeof mockRedisSet>) => mockRedisSet(...args),
   },
 }));
 
@@ -51,7 +50,7 @@ function makeToken(overrides: Record<string, unknown> = {}, expiresIn = '10m') {
     ip: TEST_IP,
     ...overrides,
   };
-  return jwt.sign(payload, TEST_SECRET, { expiresIn: expiresIn as any });
+  return jwt.sign(payload, TEST_SECRET, { expiresIn: expiresIn as SignOptions['expiresIn'] });
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────

@@ -1,7 +1,5 @@
-import { Worker } from 'bullmq';
-import Redis from 'ioredis';
+import { Worker, ConnectionOptions } from 'bullmq';
 import { prisma } from '../config/db';
-import { env } from '../config/env';
 import { SeatStatus } from '@prisma/client';
 import { logger } from '../utils/logger';
 import { redisClient } from '../utils/redis';
@@ -31,7 +29,7 @@ export function startSeatLockWorker() {
     } catch (error) {
       logger.error({ error }, '[SeatLock] Worker encountered an error');
     }
-  }, { connection: redisClient as any });
+  }, { connection: redisClient as ConnectionOptions });
 
   worker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, error: err }, 'Seat lock worker job failed');

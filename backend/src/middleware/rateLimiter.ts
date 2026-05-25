@@ -8,7 +8,7 @@ import Redis from 'ioredis';
 
 // Optional: Use Redis if available, otherwise fallback to memory store
 const redisClient = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : undefined;
-const store = redisClient ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.call(args[0], ...args.slice(1)) as any }) : undefined;
+const store = redisClient ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.call(args[0], ...args.slice(1)) as Promise<number> }) : undefined;
 
 /** General API limiter — 100 requests per minute */
 export const generalLimiter = rateLimit({

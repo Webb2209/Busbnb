@@ -30,7 +30,8 @@ jest.mock('../config/db', () => ({
 
 // Mock confirmBookingPaid (complex internal fn — tested separately via bookings tests)
 jest.mock('../routes/bookings', () => {
-  const express = require('express');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const express = require('express') as typeof import('express');
   return {
     __esModule: true,
     default: express.Router(),

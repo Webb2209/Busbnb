@@ -6,7 +6,6 @@ import { PrismaClient } from '@prisma/client';
 
 declare global {
   // Allow reuse of the same instance across hot reloads in development
-  // eslint-disable-next-line no-var
   var __prisma: PrismaClient | undefined;
 }
 

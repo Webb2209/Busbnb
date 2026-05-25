@@ -3,7 +3,6 @@
  * Pure Node.js CIDR matching — no external dependencies.
  * Uses the built-in `net` module for IPv4 subnet checks.
  */
-import { Socket } from 'net';
 
 /**
  * Convert an IPv4 address string to a 32-bit integer.

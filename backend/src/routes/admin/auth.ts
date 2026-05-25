@@ -14,7 +14,7 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/apiError';
 import { adminLoginLimiter } from '../../middleware/rateLimiter';
 import { issueTokens, setTokenCookies } from '../../utils/authUtils';
-import { ok, okDeleted } from '../../utils/response';
+import { okDeleted } from '../../utils/response';
 
 const router = Router();
 

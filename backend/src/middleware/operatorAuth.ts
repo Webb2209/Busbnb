@@ -14,11 +14,9 @@ export interface OperatorTokenPayload {
 }
 
 // Extend Express Request so downstream handlers can read req.operator
-declare global {
-  namespace Express {
-    interface Request {
-      operator?: OperatorTokenPayload;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    operator?: OperatorTokenPayload;
   }
 }
 

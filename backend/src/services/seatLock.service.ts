@@ -10,7 +10,7 @@
  *  5. Cron job runs every 2 min and resets expired LOCKED seats → AVAILABLE
  */
 import { SeatStatus } from '@prisma/client';
-import { Queue } from 'bullmq';
+import { Queue, ConnectionOptions } from 'bullmq';
 import { prisma } from '../config/db';
 import { env } from '../config/env';
 import { ApiError } from '../utils/apiError';
@@ -19,7 +19,6 @@ import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { redisClient } from '../utils/redis';
 
-const LOCK_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 const LOCK_DURATION_SEC = 10 * 60;        // Redis TTL in seconds
 
 // Only instantiate Queue if we have a valid Redis connection
@@ -29,7 +28,7 @@ export function startSeatLockExpiryJob() {
   if (seatLockQueue) return; // Already initialized
 
   if (redisClient) {
-    seatLockQueue = new Queue('seat-lock-expiry', { connection: redisClient as any });
+    seatLockQueue = new Queue('seat-lock-expiry', { connection: redisClient as ConnectionOptions });
 
     seatLockQueue.add('expire-seats', {}, {
       repeat: {

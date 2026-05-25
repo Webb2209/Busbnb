@@ -13,11 +13,9 @@ interface AdminTokenPayload {
 }
 
 // Extend Express Request so downstream handlers can read req.admin
-declare global {
-  namespace Express {
-    interface Request {
-      admin?: AdminTokenPayload;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    admin?: AdminTokenPayload;
   }
 }
 
